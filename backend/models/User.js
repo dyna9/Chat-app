@@ -48,6 +48,26 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null
   },
+  isMuted: {
+    type: Boolean,
+    default: false
+  },
+  muteReason: {
+    type: String,
+    default: null
+  },
+  mutedAt: {
+    type: Date,
+    default: null
+  },
+  mutedBy: {
+    type: String,
+    default: null
+  },
+  muteExpiresAt: {
+    type: Date,
+    default: null
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -70,6 +90,21 @@ userSchema.pre('save', async function(next) {
 // Method to compare passwords
 userSchema.methods.comparePassword = async function(password) {
   return await bcrypt.compare(password, this.password);
+};
+
+// Method to check if user is currently muted
+userSchema.methods.isCurrentlyMuted = function() {
+  if (!this.isMuted) return false;
+  
+  // If no expiration date, mute is permanent
+  if (!this.muteExpiresAt) return true;
+  
+  // Check if mute has expired
+  if (new Date() > this.muteExpiresAt) {
+    return false;
+  }
+  
+  return true;
 };
 
 module.exports = mongoose.model('User', userSchema);
