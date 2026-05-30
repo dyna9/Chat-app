@@ -84,6 +84,13 @@ router.post('/login',
         return res.status(400).json({ message: 'Invalid credentials' });
       }
 
+      // Check if user is banned
+      if (user.isBanned) {
+        return res.status(403).json({ 
+          message: `Your account has been banned${user.banReason ? ': ' + user.banReason : ''}` 
+        });
+      }
+
       // Check password
       const isMatch = await user.comparePassword(password);
       if (!isMatch) {
@@ -125,6 +132,11 @@ router.get('/me', async (req, res) => {
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret');
     const user = await User.findById(decoded.userId);
+
+    // Check if user is banned
+    if (user.isBanned) {
+      return res.status(403).json({ message: 'Your account has been banned' });
+    }
 
     res.json({
       user: {
