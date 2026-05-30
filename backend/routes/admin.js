@@ -73,4 +73,47 @@ router.post('/remove-mod/:userId', verifyToken, verifyOwner, async (req, res) =>
   }
 });
 
+// Ban user
+router.post('/ban-user/:userId', verifyToken, verifyOwner, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { reason } = req.body;
+    const ownerUser = await User.findById(req.userId);
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { 
+        isBanned: true,
+        banReason: reason || 'No reason provided',
+        bannedAt: new Date(),
+        bannedBy: ownerUser.username
+      },
+      { new: true }
+    );
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Unban user
+router.post('/unban-user/:userId', verifyToken, verifyOwner, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { 
+        isBanned: false,
+        banReason: null,
+        bannedAt: null,
+        bannedBy: null
+      },
+      { new: true }
+    );
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;
